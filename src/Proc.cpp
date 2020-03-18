@@ -58,13 +58,23 @@ int Proc::process(ifstream& in) {
 		in >> c;
 		if (c == 'L') {
 			in >> x1 >> y1 >> x2 >> y2;
-			Line line(x1, y1, x2, y2, i);
+			Line line(x1, y1, x2, y2, "Line", i);
 			preProcLine(line);
 		}
 		else if (c == 'C') {
 			in >> x1 >> y1 >> r1;
 			Circle circle(x1, y1, r1, i);
 			addCircle(circle);
+		}
+		else if (c == 'S') {
+			in >> x1 >> y1 >> x2 >> y2;
+			Line line(x1, y1, x2, y2, "Segment", i);
+			preProcLine(line);
+		}
+		else if (c == 'R') {
+			in >> x1 >> y1 >> x2 >> y2;
+			Line line(x1, y1, x2, y2, "Ray", i);
+			preProcLine(line);
 		}
 	}
 	int result = calcPoint();
@@ -87,7 +97,7 @@ int Proc::process(ifstream& in) {
 }
 
 void Proc::preProcLine(Line line) {
-	map<double, vector<Line>>::iterator iter;
+	/*map<double, vector<Line>>::iterator iter;
 	iter = preMap.find(line.getK());
 	if (iter != preMap.end()) {
 		vector<Line> s = iter->second;
@@ -98,18 +108,19 @@ void Proc::preProcLine(Line line) {
 		vector<Line> s;
 		s.push_back(line);
 		preMap[line.getK()] = s;
-	}
+	}*/
+	lineSet.push_back(line);
 }
 
 
 int Proc::calcPoint() {
 	lineAndLine();
 	calcCircle();
-	return pointSet.size();
+	return (int)pointSet.size();
 }
 
 void Proc::lineAndLine() {
-	map<double, vector<Line>>::iterator iterM;
+	/*map<double, vector<Line>>::iterator iterM;
 	for (iterM = preMap.begin(); iterM != preMap.end(); iterM++) {
 		vector<Line>::iterator iterS;
 		vector<Line> tempSet = iterM->second;
@@ -126,23 +137,45 @@ void Proc::lineAndLine() {
 					continue;
 				}
 				Point p = l1.withLine(l2);
-				//set<Point>::iterator iterP = pointSet.find(p);
-				unordered_set<Point, hashPoint>::iterator iterP = pointSet.find(p);
-				//if find, add all the id of lines intersected at this point to inteId
-				if (iterP != pointSet.end()) {
-					p = *iterP;
-					vector<int> temp = p.getLines();
-					inteId.insert(temp.begin(), temp.end());
-					p.addLine(l1.getId());
-				}
-				else {
-					p.addLine(l1.getId());
-					p.addLine(l2.getId());
-					pointSet.insert(p);
+				double p_x = p.getX();
+				if (l1.isOnLine(p_x) && l2.isOnLine(p_x)) {
+					//set<Point>::iterator iterP = pointSet.find(p);
+					unordered_set<Point, hashPoint>::iterator iterP = pointSet.find(p);
+					//if find, add all the id of lines intersected at this point to inteId
+					if (iterP != pointSet.end()) {
+						p = *iterP;
+						vector<int> temp = p.getLines();
+						inteId.insert(temp.begin(), temp.end());
+						p.addLine(l1.getId());
+					}
+					else {
+						p.addLine(l1.getId());
+						p.addLine(l2.getId());
+						pointSet.insert(p);
+					}
 				}
 			}
 		}
 		lineSet.insert(lineSet.end(), tempSet.begin(), tempSet.end());
+	}
+	*/
+	vector<Line>::iterator iter1;
+	for (iter1 = lineSet.begin(); iter1 != lineSet.end(); iter1++) {
+		vector<Line>::iterator iter2;
+		for (iter2 = lineSet.begin(); iter2 != iter1; iter2++) {
+			Line l1 = *iter1;
+			Line l2 = *iter2;
+			double k1 = l1.getK();
+			double k2 = l2.getK();
+			if (dEqual(k1, k2)) {
+				continue;
+			}
+			Point p = l1.withLine(l2);
+			double p_x = p.getX();
+			if (l1.isOnLine(p_x) && l2.isOnLine(p_x)) {
+				pointSet.insert(p);
+			}
+		}
 	}
 }
 
@@ -164,7 +197,7 @@ void Proc::calcCircle() {
 }
 
 void Proc::lineAndCircle(Circle circle) {
-	vector<Point> result;
+	/*vector<Point> result;
 	map<double, vector<Line>>::iterator iterM;
 	for (iterM = preMap.begin(); iterM != preMap.end(); iterM++) {
 		vector<Line>::iterator iterS;
@@ -175,6 +208,22 @@ void Proc::lineAndCircle(Circle circle) {
 			vector<Point> s = circle.withLine(l);
 			vector<Point>::iterator iterS;
 			for (iterS = s.begin(); iterS != s.end(); iterS++) {
+				double p_x = (*iterS).getX();
+				if (l.isOnLine(p_x)) {
+					pointSet.insert(*iterS);
+				}
+			}
+		}
+	}
+	*/
+	vector<Line>::iterator iter;
+	for (iter = lineSet.begin(); iter != lineSet.end(); iter++) {
+		Line l = *iter;
+		vector<Point> s = circle.withLine(l);
+		vector<Point>::iterator iterS;
+		for (iterS = s.begin(); iterS != s.end(); iterS++) {
+			double p_x = (*iterS).getX();
+			if (l.isOnLine(p_x)) {
 				pointSet.insert(*iterS);
 			}
 		}
